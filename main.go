@@ -9,7 +9,7 @@ import (
 	"github.com/gin-gonic/gin"
 	ginSwagger "github.com/swaggo/gin-swagger"
 	swaggerFiles "github.com/swaggo/gin-swagger/swaggerFiles"
-	"gorm.io/driver/sqlite"
+	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
@@ -73,7 +73,7 @@ func CreateSample(c *gin.Context) {
 
 	sample := Sample{Name: input.Name, TimeStamp: input.TimeStamp, V0: input.V0, V1: input.V1}
 	db.Create(&sample)
-	c.JSON(http.StatusOK, gin.H{"data": sample})
+	c.JSON(http.StatusOK, sample)
 }
 
 // GetSample retrieves single sample from database by ID
@@ -89,7 +89,7 @@ func GetSample(c *gin.Context) {
 		NewError(c, http.StatusNotFound, err)
 		return
 	}
-	c.JSON(http.StatusOK, gin.H{"data": sample})
+	c.JSON(http.StatusOK, sample)
 }
 
 // List all samples in the database.
@@ -102,7 +102,7 @@ func ListSamples(c *gin.Context) {
 	db := c.MustGet("db").(*gorm.DB)
 	var samples []Sample
 	db.Find(&samples)
-	c.JSON(http.StatusOK, gin.H{"data": samples})
+	c.JSON(http.StatusOK, samples)
 }
 
 // @title DBWriter API in Go with Gin and GORM
@@ -111,7 +111,8 @@ func ListSamples(c *gin.Context) {
 // @BasePath /
 // @schemes http
 func main() {
-	db, err := gorm.Open(sqlite.Open("bleh.db"), &gorm.Config{})
+	//db, err := gorm.Open(sqlite.Open("bleh.db"), &gorm.Config{})
+	db, err := gorm.Open(postgres.Open("host=localhost user=dbwriter password=blehbleh dbname=dbwriter_go port=5432 sslmode=disable"), &gorm.Config{})
 
 	if err != nil {
 		panic(err)
