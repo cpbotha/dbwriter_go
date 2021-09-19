@@ -1,7 +1,7 @@
-Super simple database writer API with gin, gorm and swagger put together by a go
-newbie to test the developer experience.
+Minimal database writer API with gin, gorm and swagger put together by a go
+newbie in 2021 to test the developer experience.
 
-See the blog post at https://vxlabs.com/
+See the blog post at https://vxlabs.com/ TBD
 
 See you,
 https://charlbotha.com/
