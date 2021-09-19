@@ -5,32 +5,36 @@ import (
 	"net/http"
 	"time"
 
+	_ "github.com/cpbotha/dbwriter_go/docs"
 	"github.com/gin-gonic/gin"
-	"github.com/jinzhu/gorm"
-	_ "github.com/jinzhu/gorm/dialects/sqlite" // _ is for import side-effect, no explicit use
 	ginSwagger "github.com/swaggo/gin-swagger"
 	swaggerFiles "github.com/swaggo/gin-swagger/swaggerFiles"
-
-	_ "github.com/cpbotha/dbwriter_go/docs"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 // GORM model
 // this would usually go in Models/sample.go
 // https://gorm.io/docs/models.html
+// getting the optional v0, v1 types right took up more time than anything else
+// (also lost time because lowercase v* were ignored)
+// sql.NullFloat64 would be more explicit than *float64, but complicates (de)serialization
 type Sample struct {
-	ID        uint
-	Name      string
-	TimeStamp time.Time
-	v0        float64
-	v1        float64
+	ID        uint      `json:"id"`
+	Name      string    `json:"name"`
+	TimeStamp time.Time `json:"timestamp"`
+	V0        *float64  `json:"v0,omitempty"`
+	V1        *float64  `json:"v1,omitempty"`
 }
 
 // post data is validated into this struct, from where we can populate the GORM model
+// I would like omission OR null to result in NULL for that sensor value in the database
+// https://www.calhoun.io/how-to-determine-if-a-json-key-has-been-set-to-null-or-not-provided/
 type CreateSampleInput struct {
 	Name      string    `json:"name" binding:"required"`
 	TimeStamp time.Time `json:"timestamp" binding:"required" example:"2021-09-19T10:41:33.333Z"`
-	V0        float64   `json:"v0" binding:"-"`
-	V1        float64   `json:"v1" binding:"-"`
+	V0        *float64  `json:"v0" binding:"-"`
+	V1        *float64  `json:"v1" binding:"-"`
 }
 
 func APIRoot(c *gin.Context) {
@@ -52,7 +56,7 @@ func NewError(ctx *gin.Context, status int, err error) {
 }
 
 // CreateSample writes a time sample to DB
-// @Summary Write single sample
+// @Summary Add a single sensor sample to the database
 // @Param sample body CreateSampleInput true "create sample"
 // @Success 200 {object} Sample
 // @Failure 400 {object} HTTPError
@@ -66,9 +70,8 @@ func CreateSample(c *gin.Context) {
 		NewError(c, http.StatusBadRequest, err)
 		return
 	}
-	// Create Sample
-	// what should we do if v0 or v1 is not supplied?
-	sample := Sample{Name: input.Name, TimeStamp: input.TimeStamp, v0: input.V0, v1: input.V1}
+
+	sample := Sample{Name: input.Name, TimeStamp: input.TimeStamp, V0: input.V0, V1: input.V1}
 	db.Create(&sample)
 	c.JSON(http.StatusOK, gin.H{"data": sample})
 }
@@ -89,7 +92,8 @@ func GetSample(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"data": sample})
 }
 
-// ListSamples godoc
+// List all samples in the database.
+//
 // @Summary List all samples
 // @Produce json
 // @Success 200 {object} []Sample
@@ -107,15 +111,17 @@ func ListSamples(c *gin.Context) {
 // @BasePath /
 // @schemes http
 func main() {
-	db, err := gorm.Open("sqlite3", "bleh.db")
+	db, err := gorm.Open(sqlite.Open("bleh.db"), &gorm.Config{})
 
 	if err != nil {
 		panic(err)
 	}
 
-	defer db.Close()
-
 	db.AutoMigrate(&Sample{})
+
+	// you can use something like this to add a row to the database:
+	// v := 0.0
+	// db.Create(&Sample{0, "bleh blah bleh", time.Now(), nil, &v})
 
 	r := gin.Default()
 
