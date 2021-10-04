@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"net/http"
+	"runtime"
 	"time"
 
 	_ "github.com/cpbotha/dbwriter_go/docs"
@@ -113,7 +114,6 @@ func ListSamples(c *gin.Context) {
 func main() {
 	//db, err := gorm.Open(sqlite.Open("bleh.db"), &gorm.Config{})
 	db, err := gorm.Open(postgres.Open("host=localhost user=dbwriter password=blehbleh dbname=dbwriter_go port=5432 sslmode=disable"), &gorm.Config{})
-
 	if err != nil {
 		panic(err)
 	}
@@ -135,11 +135,11 @@ func main() {
 	r.GET("/", APIRoot)
 	r.POST("/samples", CreateSample)
 	r.GET("/samples/:id", GetSample)
-
 	r.GET("/samples", ListSamples)
 
 	r.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
 
+	fmt.Printf("NumCPU: %d and GOMAXPROCS: %d\n", runtime.NumCPU(), runtime.GOMAXPROCS(-1))
 	fmt.Println("Started up!")
 
 	r.Run("0.0.0.0:8080")
