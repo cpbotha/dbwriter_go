@@ -1,9 +1,10 @@
 Minimal database writer API with gin, gorm and swagger put together by a go
 newbie in 2021 to test the developer experience.
 
-See the blog post at https://vxlabs.com/ "Developer experience setting up a
-minimal API in Go, C# and Python" (should be published before the end of
-October)
+See the blog post [Developer experience setting up a minimal API in Go, C# and
+Python at
+vxlabs.com](https://vxlabs.com/2021/10/03/dx-minimal-api-go-csharp-python/) for
+more information.
 
 See you,
 https://charlbotha.com/
